@@ -66,6 +66,8 @@ data class CalEvent(
     val date: LocalDate,
     val title: String,
     val time: LocalTime? = null,
+    /** Push notification: -1 none, otherwise minutes before the start (0 = at start). */
+    val notifyMin: Int = -1,
     /** > 0 for completed Focused Up sessions (logged automatically). */
     val focusMinutes: Int = 0,
 ) {
@@ -86,6 +88,8 @@ data class PrayerState(
     val remaining: Long = PRAYER_MS,
     val doneOn: LocalDate? = null,
     val snoozeUntil: Long = 0L,
+    /** Day the user cancelled the prayer; it won't pop up or auto-start again that day. */
+    val declinedOn: LocalDate? = null,
     /** Days in a row with a finished prayer, ending on [doneOn]. */
     val streak: Int = 0,
 )

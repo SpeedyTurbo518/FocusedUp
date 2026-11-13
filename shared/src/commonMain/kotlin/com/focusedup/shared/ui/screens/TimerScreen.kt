@@ -176,6 +176,9 @@ private fun CustomTimerCard(initialMinutes: Int, onStart: (Int) -> Unit) {
     var mins by remember { mutableStateOf((initialMinutes % 60).toString()) }
     val total = (hours.toIntOrNull() ?: 0) * 60 + (mins.toIntOrNull() ?: 0)
     val valid = total in 1..600
+    val engine = LocalEngine.current
+    // Remember what you typed, so it's still there next time you open the app.
+    androidx.compose.runtime.LaunchedEffect(total) { if (valid) engine.settings.customMinutes = total }
     fun setTotal(m: Int) {
         val v = m.coerceIn(5, 600)
         hours = (v / 60).toString()

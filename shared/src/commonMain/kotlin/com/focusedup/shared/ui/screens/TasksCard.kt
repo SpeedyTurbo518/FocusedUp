@@ -62,7 +62,9 @@ fun TasksCard(onToast: (String) -> Unit) {
     val today = store.today()
     val todays = all.filter { it.date == today && !it.cleared }.sortedWith(compareBy({ it.done }, { it.id }))
     val doneCount = todays.count { it.done }
-    var input by remember { mutableStateOf("") }
+    // A half-typed task survives closing the app.
+    var input by remember { mutableStateOf(engine.settings.ui("tasks_draft").orEmpty()) }
+    androidx.compose.runtime.LaunchedEffect(input) { engine.settings.setUi("tasks_draft", input) }
 
     fun addInput() {
         val added = store.add(input)

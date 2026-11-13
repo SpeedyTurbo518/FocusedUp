@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -82,8 +83,11 @@ fun CalendarScreen(onToast: (String) -> Unit) {
     val events by engine.calendar.events.collectAsState()
     val tasks by engine.tasks.tasks.collectAsState()
     val today = engine.tasks.today()
-    var month by remember { mutableStateOf(today.firstOfMonth()) }
-    var selected by remember { mutableStateOf(today) }
+    // Opens on the day you last looked at (back to today once that day has passed).
+    val savedDay = engine.settings.ui("cal_day")?.let { runCatching { LocalDate.parse(it) }.getOrNull() }?.takeIf { it >= today }
+    var month by remember { mutableStateOf((savedDay ?: today).firstOfMonth()) }
+    var selected by remember { mutableStateOf(savedDay ?: today) }
+    androidx.compose.runtime.LaunchedEffect(selected) { engine.settings.setUi("cal_day", selected.toString()) }
     var showAdd by remember { mutableStateOf(false) }
     val byDate = remember(events) { events.groupBy { it.date } }
     val doneByDate = remember(tasks) { tasks.filter { it.done && it.doneOn != null }.groupBy { it.doneOn!! } }
@@ -187,7 +191,7 @@ fun CalendarScreen(onToast: (String) -> Unit) {
                 Text("${formatMinutes(focused)} of focus", color = FColors.BlueBright, fontSize = 13.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 6.dp, bottom = 8.dp))
             }
             dayEvents.forEach { e ->
-                EventRow(e) { engine.calendar.remove(e.id) }
+                EventRow(e) { engine.removeEvent(e.id) }
                 Spacer(Modifier.height(12.dp))
             }
             if (dayDone.isNotEmpty()) {
@@ -212,8 +216,9 @@ fun CalendarScreen(onToast: (String) -> Unit) {
             date = selected,
             initialHour = toLocal(engine.platform.now()).hour,
             onDismiss = { showAdd = false },
-            onSave = { title, time ->
-                engine.calendar.add(selected, title, time)
+            onSave = { title, time, notify ->
+                engine.addEvent(selected, title, time, notify)
+                if (notify >= 0) onToast("You'll get a notification for \"$title\"")
                 showAdd = false
             },
         )
@@ -264,6 +269,9 @@ private fun EventRow(e: CalEvent, onDelete: () -> Unit) {
                 ).joinToString(" · ").ifEmpty { "All day" }
                 Text(detail, color = FColors.TextSecondary, fontSize = 13.sp)
             }
+            if (e.notifyMin >= 0) {
+                Icon(Icons.Rounded.NotificationsActive, "Notification set", tint = FColors.BlueBright, modifier = Modifier.size(18.dp))
+            }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Rounded.Close, "Delete", tint = FColors.TextTertiary, modifier = Modifier.size(20.dp))
             }
@@ -271,11 +279,14 @@ private fun EventRow(e: CalEvent, onDelete: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun AddEventDialog(date: LocalDate, initialHour: Int, onDismiss: () -> Unit, onSave: (String, LocalTime?) -> Unit) {
+private fun AddEventDialog(date: LocalDate, initialHour: Int, onDismiss: () -> Unit, onSave: (String, LocalTime?, Int) -> Unit) {
+    val engine = LocalEngine.current
+    // Remembers your last choices for the next event.
+    var notify by remember { mutableStateOf(engine.settings.eventNotify) }
     var title by remember { mutableStateOf("") }
-    var withTime by remember { mutableStateOf(false) }
+    var withTime by remember { mutableStateOf(engine.settings.ui("event_with_time") == "true") }
     val timeState = rememberTimePickerState(initialHour = initialHour, initialMinute = 0, is24Hour = false)
 
     AlertDialog(
@@ -319,12 +330,29 @@ private fun AddEventDialog(date: LocalDate, initialHour: Int, onDismiss: () -> U
                 } else {
                     PillButton(text = "Add a time (optional)", primary = false, icon = Icons.Rounded.Schedule) { withTime = true }
                 }
+                Spacer(Modifier.height(16.dp))
+                Text("NOTIFY ME", color = FColors.TextTertiary, fontSize = 12.sp, letterSpacing = 1.4.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(10.dp))
+                val choices = if (withTime) listOf(-1 to "Off", 0 to "At start", 15 to "15 min before", 60 to "1 hr before")
+                else listOf(-1 to "Off", 0 to "That morning")
+                androidx.compose.foundation.layout.FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    choices.forEach { (v, label) ->
+                        val sel = if (withTime) notify == v else (notify >= 0) == (v >= 0)
+                        Chip(label, sel) { notify = v }
+                    }
+                }
             }
         },
         confirmButton = {
             TextButton(
                 enabled = title.isNotBlank(),
-                onClick = { onSave(title.trim(), if (withTime) LocalTime(timeState.hour, timeState.minute) else null) },
+                onClick = {
+                    engine.settings.setUi("event_with_time", withTime.toString())
+                    onSave(title.trim(), if (withTime) LocalTime(timeState.hour, timeState.minute) else null, notify)
+                },
             ) {
                 Text("Add", color = if (title.isNotBlank()) FColors.BlueBright else FColors.TextTertiary, fontWeight = FontWeight.SemiBold)
             }

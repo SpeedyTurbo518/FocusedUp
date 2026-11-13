@@ -210,7 +210,7 @@ fun fieldColors() = OutlinedTextFieldDefaults.colors(
     unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
 )
 
-enum class Tab(val label: String) { Focus("Focus"), Timer("Timer"), Calendar("Calendar"), Profile("Profile"), Setup("Setup") }
+enum class Tab(val label: String) { Focus("Focus"), Timer("Timer"), Calendar("Calendar"), OnTask("On Task"), Profile("Profile"), Setup("Setup") }
 
 @Composable
 fun GlassNavBar(current: Tab, icons: Map<Tab, ImageVector>, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier) {
@@ -232,7 +232,7 @@ fun GlassNavBar(current: Tab, icons: Map<Tab, ImageVector>, onSelect: (Tab) -> U
                     .clip(RoundedCornerShape(28.dp))
                     .background(bg)
                     .clickable { onSelect(tab) }
-                    .padding(horizontal = if (selected) 14.dp else 11.dp, vertical = 12.dp),
+                    .padding(horizontal = if (selected) 14.dp else 9.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(icons.getValue(tab), contentDescription = tab.label, tint = if (selected) Color.White else FColors.TextSecondary, modifier = Modifier.size(22.dp))

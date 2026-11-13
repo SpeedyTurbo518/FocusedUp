@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Storefront
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Tune
@@ -41,6 +42,7 @@ import com.focusedup.shared.engine.FocusEngine
 import com.focusedup.shared.ui.screens.CalendarScreen
 import com.focusedup.shared.ui.screens.FocusScreen
 import com.focusedup.shared.ui.screens.IncomingProfileDialog
+import com.focusedup.shared.ui.screens.OnTaskScreen
 import com.focusedup.shared.ui.screens.PrayerScreen
 import com.focusedup.shared.ui.screens.ProfileScreen
 import com.focusedup.shared.ui.screens.SetupScreen
@@ -52,6 +54,7 @@ private val TAB_ICONS = mapOf(
     Tab.Focus to Icons.Rounded.PowerSettingsNew,
     Tab.Timer to Icons.Rounded.Timer,
     Tab.Calendar to Icons.Rounded.CalendarMonth,
+    Tab.OnTask to Icons.Rounded.Storefront,
     Tab.Profile to Icons.Rounded.Person,
     Tab.Setup to Icons.Rounded.Tune,
 )
@@ -103,7 +106,10 @@ fun FocusedUpApp(engine: FocusEngine) {
 
 @Composable
 private fun MainContent(onOpenPrayer: () -> Unit) {
-    var tab by rememberSaveable { mutableStateOf(Tab.Focus) }
+    val engine = LocalEngine.current
+    // Opens on the tab you used last, even after the app was closed.
+    var tab by remember { mutableStateOf(Tab.entries.firstOrNull { it.name == engine.settings.ui("tab") } ?: Tab.Focus) }
+    LaunchedEffect(tab) { engine.settings.setUi("tab", tab.name) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val toast: (String) -> Unit = { msg ->
@@ -122,6 +128,7 @@ private fun MainContent(onOpenPrayer: () -> Unit) {
                         Tab.Focus -> FocusScreen(onToast = toast, onOpenSetup = { tab = Tab.Setup }, onOpenPrayer = onOpenPrayer)
                         Tab.Timer -> TimerScreen(onToast = toast)
                         Tab.Calendar -> CalendarScreen(onToast = toast)
+                        Tab.OnTask -> OnTaskScreen(onToast = toast)
                         Tab.Profile -> ProfileScreen(onOpenPrayer = onOpenPrayer, onToast = toast)
                         Tab.Setup -> SetupScreen(onToast = toast)
                     }

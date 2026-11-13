@@ -6,6 +6,7 @@ import com.focusedup.shared.data.AppearanceStore
 import com.focusedup.shared.data.CalendarStore
 import com.focusedup.shared.data.FriendsStore
 import com.focusedup.shared.data.NotionStore
+import com.focusedup.shared.data.OnTaskStore
 import com.focusedup.shared.data.ProfileStore
 import com.focusedup.shared.data.ShareLinks
 import com.focusedup.shared.data.SharedProfile
@@ -26,6 +27,7 @@ import com.focusedup.shared.util.toLocal
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.minus
+import kotlinx.datetime.toInstant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -59,6 +61,17 @@ class FocusEngine(val platform: FocusPlatform) {
     val profile = ProfileStore(platform.store, platform)
     val notion = NotionStore(platform.store, platform)
     val friends = FriendsStore(platform.store)
+
+    /** "On Task" tab: retail shift timer, check-ins, breaks, floor checklist and scoreboard. */
+    val onTask = OnTaskStore(
+        platform.store, platform::now,
+        remind = { remind(it) },
+        cancelReminder = { cancelReminder(it) },
+        logShift = { title ->
+            val t = toLocal(platform.now())
+            calendar.add(t.date, title, LocalTime(t.hour, t.minute))
+        },
+    )
 
     /** A profile someone shared with us, waiting for the user to save or dismiss it. */
     private val _incoming = MutableStateFlow<SharedProfile?>(null)
@@ -135,6 +148,31 @@ class FocusEngine(val platform: FocusPlatform) {
                 val whenText = listOfNotNull(item.date?.let { "${it.monthNumber}/${it.dayOfMonth}" }, item.arrival).joinToString(" at ")
                 remind(Reminder(item.id, "Video shoot: ${item.title}", "$SHOOT_TAG $whenText".trim(), at))
             }
+    }
+
+    // ---------------- Calendar events with push notifications ----------------
+
+    /** Adds an event and schedules its push notification ([notifyMin] minutes before; all-day events at 9 AM). */
+    fun addEvent(date: kotlinx.datetime.LocalDate, title: String, time: LocalTime?, notifyMin: Int) {
+        settings.eventNotify = notifyMin
+        val e = calendar.add(date, title, time, notifyMin = notifyMin)
+        if (notifyMin < 0) return
+        val zone = kotlinx.datetime.TimeZone.currentSystemDefault()
+        val start = kotlinx.datetime.LocalDateTime(date, time ?: LocalTime(9, 0)).toInstant(zone).toEpochMilliseconds()
+        val at = if (time == null) start else start - notifyMin * 60_000L
+        if (at <= platform.now()) return
+        val text = when {
+            time == null -> "Today"
+            notifyMin == 0 -> "Starting now"
+            notifyMin >= 60 -> "Starts in ${notifyMin / 60} hour${if (notifyMin >= 120) "s" else ""}"
+            else -> "Starts in $notifyMin minutes"
+        }
+        remind(Reminder("event-${e.id}", title, text, at))
+    }
+
+    fun removeEvent(id: Long) {
+        cancelReminder("event-$id")
+        calendar.remove(id)
     }
 
     // ---------------- Remind me ----------------
@@ -227,6 +265,7 @@ class FocusEngine(val platform: FocusPlatform) {
         val p = _prayer.value
         if (p.running && now >= p.endsAt) completePrayer()
         fireDueReminders(now)
+        onTask.tick()
         if (_state.value.phase == Phase.ACTIVE && now - lastKeepFocus >= KEEP_FOCUS_EVERY_MS) {
             lastKeepFocus = now
             platform.keepFocus()
@@ -343,6 +382,8 @@ class FocusEngine(val platform: FocusPlatform) {
     /** True when the prayer screen should open by itself (after the splash, or when a snooze runs out). */
     fun prayerDue(): Boolean {
         if (!settings.prayerEnabled || prayedToday) return false
+        // You cancelled it today: remember that and don't bring it back until tomorrow.
+        if (_prayer.value.declinedOn == tasks.today()) return false
         if (_state.value.timer.isSet) return false
         return platform.now() >= _prayer.value.snoozeUntil
     }
@@ -382,7 +423,7 @@ class FocusEngine(val platform: FocusPlatform) {
     /** Called when the splash fades: start the prayer timer (and its music) by itself. */
     fun autoStartPrayer() {
         val p = _prayer.value
-        if (prayedToday || p.running || p.remaining < PRAYER_MS) return
+        if (prayedToday || p.running || p.remaining < PRAYER_MS || p.declinedOn == tasks.today()) return
         startPrayer()
     }
 
@@ -408,7 +449,7 @@ class FocusEngine(val platform: FocusPlatform) {
 
     /** Cancel: stop the timer and reset it to the full 15 minutes. */
     fun resetPrayer() {
-        commitPrayer(_prayer.value.copy(running = false, remaining = PRAYER_MS, endsAt = 0L))
+        commitPrayer(_prayer.value.copy(running = false, remaining = PRAYER_MS, endsAt = 0L, declinedOn = tasks.today()))
         stopMusic()
     }
 

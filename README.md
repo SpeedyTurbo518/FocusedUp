@@ -8,7 +8,8 @@ A dark, glassy focus app made by **STG Studios, a faith based company**. It runs
 |---|---|
 | **Focus** | One big power button to start Focus Mode, plus **Today's tasks**: type a task and press Enter, or paste a whole list (one task per line). Unfinished tasks carry over to the next day. |
 | **Timer** | **01 · Quick Sprint** (40 min), **02 · Deep Dive** (1 hr 30), **03 · Full Armor** (1 hr 45), or a **custom time**. It can also start and stop Focus Mode for you. |
-| **Calendar** | A month view with your own events, logged focus sessions, and an optional **Notion feed** (Android): your upcoming recordings with date and time, **Remind me** buttons, a chime when your content goes to review or a video upload finishes, and **Clear** for finished shoots. |
+| **Calendar** | A month view with your own events (with optional push notifications), logged focus sessions, and an optional **Notion feed** (Android): your upcoming recordings with date and time, **Remind me** buttons, a chime when your content goes to review or a video upload finishes, and **Clear** for finished shoots. |
+| **On Task** | For sales-floor and retail shifts: shift timer, check-in nudges, break and lunch reminders, a floor checklist and a scoreboard (customers helped, sales, add-ons, sales goal). Shifts are logged to the calendar. |
 | **Profile** | Name, tagline, profile color, cover photo and profile photos, your stats, and **Share** (a link that opens the app, or asks before offering the download). |
 | **Setup** | **App appearance** (colors, hue/contrast/saturation, app icon), prayer music, permissions, full screen (desktop) and About. |
 

@@ -62,6 +62,15 @@ class AppSettings(private val store: KeyValueStore) {
         get() = store.get("music_setup_done")?.toBooleanStrictOrNull() ?: false
         set(v) = store.put("music_setup_done", v.toString())
 
+    /** Remembers small UI choices (last tab, typed inputs, calendar day...) across app restarts. */
+    fun ui(key: String): String? = store.get("ui_$key")?.takeIf { it.isNotEmpty() }
+    fun setUi(key: String, value: String?) = store.put("ui_$key", value ?: "")
+
+    /** Default push notification for new calendar events: -1 none, 0 at start, 15, 60 (minutes before). */
+    var eventNotify: Int
+        get() = store.get("event_notify")?.toIntOrNull() ?: 15
+        set(v) = store.put("event_notify", v.toString())
+
     /** Desktop: open in full screen. */
     var startFullscreen: Boolean
         get() = store.get("start_fullscreen")?.toBooleanStrictOrNull() ?: false
@@ -210,8 +219,10 @@ class CalendarStore(private val store: KeyValueStore, private val now: () -> Lon
     private val _events = MutableStateFlow(load())
     val events: StateFlow<List<CalEvent>> = _events.asStateFlow()
 
-    fun add(date: LocalDate, title: String, time: LocalTime?, focusMinutes: Int = 0) {
-        save(_events.value + CalEvent(ids.next(), date, title, time, focusMinutes))
+    fun add(date: LocalDate, title: String, time: LocalTime?, focusMinutes: Int = 0, notifyMin: Int = -1): CalEvent {
+        val e = CalEvent(ids.next(), date, title, time, focusMinutes = focusMinutes, notifyMin = notifyMin)
+        save(_events.value + e)
+        return e
     }
 
     fun remove(id: Long) = save(_events.value.filterNot { it.id == id })
