@@ -1,0 +1,92 @@
+# Builds the iPhone app on a free GitHub Mac and publishes an unsigned FocusedUp.ipa.
+# AltStore (or SideStore) signs it with your free Apple ID when it installs it on your iPhone.
+#
+# Run it: GitHub repo → Actions → "Build iPhone app (.ipa)" → Run workflow.
+# Download: open the finished run → Artifacts → FocusedUp-ipa.
+name: Build iPhone app (.ipa)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "shared/**"
+      - "iosApp/**"
+      - ".github/workflows/ios.yml"
+      - "*.gradle.kts"
+      - "gradle.properties"
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pick Xcode 16
+        run: |
+          ls -d /Applications/Xcode*.app
+          XC=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$XC" ]; then sudo xcode-select -s "$XC"; fi
+          xcodebuild -version
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Cache Kotlin/Native compiler
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('build.gradle.kts') }}
+
+      - name: Prepare
+        run: |
+          chmod +x gradlew
+          brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: iosApp
+        run: xcodegen generate
+
+      - name: Build app (unsigned)
+        working-directory: iosApp
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project FocusedUp.xcodeproj \
+            -scheme FocusedUp \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build | tee xcodebuild.log | grep -E "error:|warning: .*Kotlin|BUILD (SUCCEEDED|FAILED)|^e: " || true
+          test -d build/Build/Products/Release-iphoneos/FocusedUp.app
+
+      - name: Package .ipa
+        working-directory: iosApp
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/FocusedUp.app Payload/
+          zip -qry FocusedUp.ipa Payload
+          ls -lh FocusedUp.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FocusedUp-ipa
+          path: iosApp/FocusedUp.ipa
+          retention-days: 30
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: iosApp/xcodebuild.log
+          if-no-files-found: ignore

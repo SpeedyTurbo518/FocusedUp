@@ -1,0 +1,9 @@
+# Copy to focusedup.properties (not committed) and fill in, then rebuild.
+
+# Notion public integration (https://www.notion.so/profile/integrations -> New integration -> Public).
+# Redirect URI to register in Notion: http://localhost:53682/notion
+notion.clientId=
+notion.clientSecret=
+
+# Web page that opens shared profiles (and offers the download if the app isn't installed).
+share.baseUrl=https://speedyturbo518.github.io/FocusedUp/share/

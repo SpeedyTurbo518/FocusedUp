@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Focused Up profile</title>
+<meta name="robots" content="noindex">
+<style>
+  :root { --bg:#03050A; --night:#07122A; --text:#fff; --muted:rgba(255,255,255,.62); --faint:rgba(255,255,255,.38); --accent:#3B82F6; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; background:linear-gradient(180deg,var(--night),var(--bg)); color:var(--text);
+         font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; display:flex; align-items:center; justify-content:center; padding:24px 16px; }
+  .card { width:100%; max-width:420px; text-align:center; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14);
+          border-radius:28px; padding:36px 24px; }
+  .avatar { width:96px; height:96px; border-radius:50%; margin:0 auto 18px; display:flex; align-items:center; justify-content:center;
+            font-size:36px; font-weight:700; background:var(--accent); }
+  h1 { margin:0 0 6px; font-size:28px; }
+  .tag { color:var(--muted); margin:0 0 10px; }
+  .stats { color:var(--faint); font-size:14px; margin-bottom:28px; }
+  button, a.btn { display:block; width:100%; border:0; border-radius:999px; padding:15px; font-size:16px; font-weight:600;
+                  cursor:pointer; text-decoration:none; color:#fff; background:var(--accent); margin-top:12px; }
+  .ghost { background:rgba(255,255,255,.08) !important; border:1px solid rgba(255,255,255,.16) !important; }
+  .note { color:var(--faint); font-size:13px; margin-top:20px; line-height:1.5; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<main class="card">
+  <div id="avatar" class="avatar">?</div>
+  <h1 id="name">Focused Up</h1>
+  <p id="tagline" class="tag"></p>
+  <div id="stats" class="stats"></div>
+
+  <section id="open">
+    <button id="openBtn">Open in Focused Up</button>
+    <p class="note">Opens the profile in the app. If you don't have the app, we'll ask before downloading anything.</p>
+  </section>
+
+  <section id="ask" class="hidden">
+    <p class="tag"><strong>Focused Up isn't installed on this device.</strong></p>
+    <p class="tag">Would you like to download it?</p>
+    <a id="yes" class="btn" href="#">Yes, download</a>
+    <button id="no" class="ghost">No thanks</button>
+    <p class="note" id="hint"></p>
+  </section>
+
+  <section id="declined" class="hidden">
+    <p class="tag">No problem. Nothing was downloaded.</p>
+  </section>
+</main>
+<script>
+  // Where "Yes, download" goes. Swap the Android link for the Play Store listing once it's live.
+  const DOWNLOADS = {
+    android: "https://github.com/SpeedyTurbo518/FocusedUp/releases/latest/download/FocusedUp-android.apk",
+    windows: "https://github.com/SpeedyTurbo518/FocusedUp/releases/latest/download/FocusedUp-windows-installer.msi",
+  };
+  const COLORS = ["#3B82F6","#EF4444","#22C55E","#8B5CF6","#F59E0B","#14B8A6","#EC4899"];
+
+  const hash = new URLSearchParams(location.hash.slice(1));
+  const code = hash.get("p") || "";
+  const missing = new URLSearchParams(location.search).get("missing") === "1";
+  const ua = navigator.userAgent;
+  const isAndroid = /Android/i.test(ua);
+  const isWindows = /Windows/i.test(ua);
+  const $ = (id) => document.getElementById(id);
+
+  // The profile travels in the #fragment, so it never reaches any server.
+  try {
+    const b64 = code.replace(/-/g, "+").replace(/_/g, "/");
+    const json = JSON.parse(decodeURIComponent(escape(atob(b64 + "===".slice((b64.length + 3) % 4)))));
+    $("name").textContent = json.n;
+    $("tagline").textContent = json.t || "";
+    $("stats").textContent = `${Math.floor((json.m || 0) / 60)}h focused · ${json.s || 0} prayer days`;
+    $("avatar").textContent = json.n.split(" ").filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("");
+    $("avatar").style.background = COLORS[json.c] || COLORS[0];
+    document.documentElement.style.setProperty("--accent", COLORS[json.c] || COLORS[0]);
+  } catch (e) { /* no or bad profile: still offer the app */ }
+
+  function askToDownload() {
+    $("open").classList.add("hidden");
+    $("ask").classList.remove("hidden");
+    const url = isAndroid ? DOWNLOADS.android : isWindows ? DOWNLOADS.windows : null;
+    if (url) $("yes").href = url;
+    else { $("yes").classList.add("hidden"); $("hint").textContent = "Focused Up is available for Android and Windows."; }
+    if (isAndroid) $("hint").textContent = "After it downloads, open the file and allow the install when Android asks. Then tap this link again.";
+  }
+
+  $("openBtn").onclick = () => {
+    if (isAndroid) {
+      // Opens the app if installed; otherwise Chrome comes back here with ?missing=1 and we ask first.
+      const fallback = location.origin + location.pathname + "?missing=1#p=" + code;
+      location.href = "intent://profile?p=" + code + "#Intent;scheme=focusedup;package=com.focusedup.app;S.browser_fallback_url=" +
+        encodeURIComponent(fallback) + ";end";
+    } else {
+      location.href = "focusedup://profile?p=" + code;
+      setTimeout(() => { if (!document.hidden) askToDownload(); }, 1500);
+    }
+  };
+  $("no").onclick = () => { $("ask").classList.add("hidden"); $("declined").classList.remove("hidden"); };
+  if (missing) askToDownload();
+</script>
+</body>
+</html>

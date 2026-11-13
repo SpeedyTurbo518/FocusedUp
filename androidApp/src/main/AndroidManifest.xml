@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Do Not Disturb + silencing ringer/notification/system sounds -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- Session countdown notification + completion alert -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Notion sync and sign-in -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Exact timer end even when the phone is asleep -->
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.FocusedUp">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize">
+            <!-- Shared profile links: focusedup://profile#p=... -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="focusedup" android:host="profile" />
+                <data android:scheme="focusedup" android:host="notion" />
+            </intent-filter>
+        </activity>
+        <!-- Home-screen icon choices (Setup > App icon). Exactly one is enabled. -->
+
+        <activity-alias
+            android:name=".IconBlueGlow"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_blue_glow"
+            android:roundIcon="@mipmap/ic_blue_glow"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconBlueSolid"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_blue_solid"
+            android:roundIcon="@mipmap/ic_blue_solid"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconBlueOutline"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_blue_outline"
+            android:roundIcon="@mipmap/ic_blue_outline"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconRedGlow"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_red_glow"
+            android:roundIcon="@mipmap/ic_red_glow"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconRedSolid"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_red_solid"
+            android:roundIcon="@mipmap/ic_red_solid"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconRedOutline"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_red_outline"
+            android:roundIcon="@mipmap/ic_red_outline"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconGreenGlow"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_green_glow"
+            android:roundIcon="@mipmap/ic_green_glow"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconGreenSolid"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_green_solid"
+            android:roundIcon="@mipmap/ic_green_solid"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconGreenOutline"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_green_outline"
+            android:roundIcon="@mipmap/ic_green_outline"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconPurpleGlow"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_purple_glow"
+            android:roundIcon="@mipmap/ic_purple_glow"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconPurpleSolid"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_purple_solid"
+            android:roundIcon="@mipmap/ic_purple_solid"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconPurpleOutline"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_purple_outline"
+            android:roundIcon="@mipmap/ic_purple_outline"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconGoldGlow"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_gold_glow"
+            android:roundIcon="@mipmap/ic_gold_glow"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconGoldSolid"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_gold_solid"
+            android:roundIcon="@mipmap/ic_gold_solid"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconGoldOutline"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_gold_outline"
+            android:roundIcon="@mipmap/ic_gold_outline"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconSilverGlow"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_silver_glow"
+            android:roundIcon="@mipmap/ic_silver_glow"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconSilverSolid"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_silver_solid"
+            android:roundIcon="@mipmap/ic_silver_solid"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconSilverOutline"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_silver_outline"
+            android:roundIcon="@mipmap/ic_silver_outline"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <service
+            android:name=".focus.FocusService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Focus session timer that keeps Do Not Disturb active and restores sound afterwards" />
+        </service>
+
+        <receiver
+            android:name=".focus.AlarmReceiver"
+            android:exported="false" />
+    </application>
+</manifest>

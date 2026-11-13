@@ -1,0 +1,50 @@
+# XcodeGen spec for the iPhone app. On a Mac:
+#   brew install xcodegen
+#   cd iosApp && xcodegen
+#   open FocusedUp.xcodeproj
+name: FocusedUp
+options:
+  bundleIdPrefix: com.stgstudios
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  FocusedUp:
+    type: application
+    platform: iOS
+    scheme: {}
+    sources:
+      - FocusedUp
+    info:
+      path: FocusedUp/Info.plist
+      properties:
+        CFBundleDisplayName: Focused Up
+        CFBundleShortVersionString: "2.0"
+        CFBundleVersion: "2"
+        UILaunchScreen:
+          UIColorName: ""
+        UIUserInterfaceStyle: Dark
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        # Required by Compose Multiplatform for smooth 120 Hz rendering.
+        CADisableMinimumFrameDurationOnPhone: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.stgstudios.focusedup
+        PRODUCT_NAME: FocusedUp
+        MARKETING_VERSION: "2.0"
+        CURRENT_PROJECT_VERSION: "2"
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        FRAMEWORK_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
+        OTHER_LDFLAGS:
+          - "$(inherited)"
+          - "-framework"
+          - "Shared"
+    preBuildScripts:
+      - name: Compile Kotlin shared framework
+        basedOnDependencyAnalysis: false
+        script: |
+          cd "$SRCROOT/.."
+          ./gradlew :shared:embedAndSignAppleFrameworkForXcode

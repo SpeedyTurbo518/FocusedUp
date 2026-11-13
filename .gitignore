@@ -1,0 +1,22 @@
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+.kotlin/
+dist/
+
+# iPhone build outputs (generated on the Mac build machine)
+iosApp/*.xcodeproj/
+iosApp/build/
+iosApp/Payload/
+iosApp/xcodebuild.log
+*.ipa
+
+# App secrets (Notion keys)
+focusedup.properties
+
+# Private notes (business details, not for the public repo)
+NOTION-DSM-REQUEST.md

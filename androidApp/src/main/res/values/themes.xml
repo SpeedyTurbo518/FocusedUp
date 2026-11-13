@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.FocusedUp" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/fu_black</item>
+        <item name="android:colorAccent">@color/fu_blue</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <color name="fu_black">#FF03050A</color>
+    <color name="fu_blue">#FF3B82F6</color>
+</resources>
